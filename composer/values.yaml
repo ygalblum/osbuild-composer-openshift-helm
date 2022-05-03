@@ -1,0 +1,27 @@
+composer_api_port: "8080"
+composer_api_internal_port: "18080"
+composer_config_bucket_name: imagebuilder.service.staging
+composer_config_dir: /etc/osbuild-composer
+composer_instance_label: '# TODO: must define a default value for .composer_instance_label'
+replicas: 3
+cpu_limit: "1"
+cpu_request: 200m
+image_name: quay.io/app-sre/composer
+image_tag: '# TODO: must define a default value for .image_tag'
+koji_enable_jwt: "false"
+liveness_uri: /api/image-builder-composer/v2/openapi
+maintenance_dry_run: "true"
+maintenance_image_name: quay.io/app-sre/composer-maintenance
+maintenance_max_concurrent_requests: "10"
+mas_sso_base_url: https://identity.api.openshift.com/auth/realms/rhoas
+memory_limit: 512Mi
+memory_request: 256Mi
+pgmaxconns: "20"
+pgsslmode: require
+readiness_uri: /api/image-builder-composer/v2/openapi
+rh_sso_base_url: https://sso.redhat.com/auth/realms/redhat-external
+worker_api_enable_jwt: "false"
+worker_api_port: "8700"
+worker_api_internal_port: "18700"
+proxy_image_name: envoyproxy/envoy
+proxy_image_tag: v1.21-latest

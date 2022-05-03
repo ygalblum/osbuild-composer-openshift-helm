@@ -1,0 +1,4 @@
+description: Composer component of the image-builder serivce
+name: composer
+tags: golang
+version: v0.0.1
