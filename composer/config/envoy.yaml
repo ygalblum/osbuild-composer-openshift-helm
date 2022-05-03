@@ -11,7 +11,7 @@ static_resources:
         typed_config:
           "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           codec_type: AUTO
-          stat_prefix: ingress_http
+          stat_prefix: remote_worker_api
           route_config:
             name: local_route
             virtual_hosts:
@@ -35,12 +35,12 @@ static_resources:
           common_tls_context:
             tls_certificates:
             - certificate_chain:
-                filename: /etc/certs/composer-crt.pem
+                filename: {{ .Values.proxy_certs_dir }}/composer-crt.pem
               private_key:
-                filename: /etc/certs/composer-key.pem
+                filename: {{ .Values.proxy_certs_dir }}/composer-key.pem
             validation_context:
               trusted_ca:
-                filename: /etc/certs/ca-crt.pem
+                filename: {{ .Values.proxy_certs_dir }}/ca-crt.pem
   - name: composer-api
     address:
       socket_address:
@@ -52,7 +52,7 @@ static_resources:
         typed_config:
           "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           codec_type: AUTO
-          stat_prefix: ingress_http
+          stat_prefix: composer_api
           route_config:
             name: local_route
             virtual_hosts:
@@ -76,12 +76,12 @@ static_resources:
           common_tls_context:
             tls_certificates:
             - certificate_chain:
-                filename: /etc/certs/composer-crt.pem
+                filename: {{ .Values.proxy_certs_dir }}/composer-crt.pem
               private_key:
-                filename: /etc/certs/composer-key.pem
+                filename: {{ .Values.proxy_certs_dir }}/composer-key.pem
             validation_context:
               trusted_ca:
-                filename: /etc/certs/ca-crt.pem
+                filename: {{ .Values.proxy_certs_dir }}/ca-crt.pem
 
   clusters:
   - name: remote-worker-api

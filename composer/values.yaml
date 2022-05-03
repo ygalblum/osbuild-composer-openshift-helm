@@ -25,3 +25,4 @@ worker_api_port: "8700"
 worker_api_internal_port: "18700"
 proxy_image_name: envoyproxy/envoy
 proxy_image_tag: v1.21-latest
+proxy_certs_dir: /etc/certs
