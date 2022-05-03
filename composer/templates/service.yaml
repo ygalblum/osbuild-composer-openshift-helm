@@ -3,16 +3,15 @@ kind: Service
 metadata:
   labels:
     app: composer
-    composerInstance: {{ .Values.composer_instance_label }}
     port: composer-api
     template: composer
   name: image-builder-composer
 spec:
   ports:
   - name: composer-api
-    port: 80
+    port: 443
     protocol: TCP
-    targetPort: {{ .Values.composer_api_port }}
+    targetPort: {{ .Values.ports.composer_api_external }}
   selector:
     app: composer
 ---
@@ -21,15 +20,14 @@ kind: Service
 metadata:
   labels:
     app: composer
-    composerInstance: {{ .Values.composer_instance_label }}
     port: worker-api
     template: composer
   name: image-builder-worker
 spec:
   ports:
   - name: worker-api
-    port: 80
+    port: 443
     protocol: TCP
-    targetPort: {{ .Values.worker_api_port }}
+    targetPort: {{ .Values.ports.worker_api_external }}
   selector:
     app: composer
