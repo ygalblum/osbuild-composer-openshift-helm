@@ -1,0 +1,10 @@
+[koji]
+log_level = "{{ .Values.composer_config.koji.log_level }}"
+enable_tls = false
+[worker]
+log_level = "{{ .Values.composer_config.worker.log_level }}"
+request_job_timeout = "{{ .Values.composer_config.worker.request_job_timeout }}"
+# base_path = "/api/image-builder-worker/v1"
+base_path = "{{ .Values.composer_config.worker.base_path }}"
+enable_artifacts = false
+enable_tls = false

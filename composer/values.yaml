@@ -18,6 +18,13 @@ ports:
   composer_api_internal: "18080"
   worker_api_external: "8700"
   worker_api_internal: "18700"
+composer_config:
+  koji:
+    log_level: "info"
+  worker:
+    log_level: "info"
+    request_job_timeout: "30s"
+    base_path: "/api/worker/v1"
 
 composer_config_bucket_name: imagebuilder.service.staging
 composer_config_dir: /etc/osbuild-composer
