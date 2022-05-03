@@ -4,7 +4,7 @@ static_resources:
     address:
       socket_address:
         address: 0.0.0.0
-        port_value: {{ .Values.worker_api_port }}
+        port_value: {{ .Values.ports.worker_api_external }}
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
@@ -35,17 +35,17 @@ static_resources:
           common_tls_context:
             tls_certificates:
             - certificate_chain:
-                filename: {{ .Values.proxy_certs_dir }}/composer-crt.pem
+                filename: {{ .Values.deployment.proxy.certs_dir }}/composer-crt.pem
               private_key:
-                filename: {{ .Values.proxy_certs_dir }}/composer-key.pem
+                filename: {{ .Values.deployment.proxy.certs_dir }}/composer-key.pem
             validation_context:
               trusted_ca:
-                filename: {{ .Values.proxy_certs_dir }}/ca-crt.pem
+                filename: {{ .Values.deployment.proxy.certs_dir }}/ca-crt.pem
   - name: composer-api
     address:
       socket_address:
         address: 0.0.0.0
-        port_value: {{ .Values.composer_api_port }}
+        port_value: {{ .Values.ports.composer_api_external }}
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
@@ -76,12 +76,12 @@ static_resources:
           common_tls_context:
             tls_certificates:
             - certificate_chain:
-                filename: {{ .Values.proxy_certs_dir }}/composer-crt.pem
+                filename: {{ .Values.deployment.proxy.certs_dir }}/composer-crt.pem
               private_key:
-                filename: {{ .Values.proxy_certs_dir }}/composer-key.pem
+                filename: {{ .Values.deployment.proxy.certs_dir }}/composer-key.pem
             validation_context:
               trusted_ca:
-                filename: {{ .Values.proxy_certs_dir }}/ca-crt.pem
+                filename: {{ .Values.deployment.proxy.certs_dir }}/ca-crt.pem
 
   clusters:
   - name: remote-worker-api
@@ -95,7 +95,7 @@ static_resources:
             address:
               socket_address:
                 address: localhost
-                port_value: {{ .Values.worker_api_internal_port }}
+                port_value: {{ .Values.ports.worker_api_internal }}
   - name: composer-api
     type: STRICT_DNS
     lb_policy: ROUND_ROBIN
@@ -107,4 +107,4 @@ static_resources:
             address:
               socket_address:
                 address: localhost
-                port_value: {{ .Values.composer_api_internal_port }}
+                port_value: {{ .Values.ports.composer_api_internal }}

@@ -1,3 +1,5 @@
-image_tag: 9336d66
+deployment:
+  composer:
+    image_tag: 9336d66
 pgsslmode: disable
 composer_instance_label: helm-install
