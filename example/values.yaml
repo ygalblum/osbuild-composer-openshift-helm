@@ -1,0 +1,8 @@
+deployment:
+  composer:
+    image_tag: fc87b17
+    pgsslmode: disable
+db:
+  name: composer
+  user: composer
+  password: Gr8Password!

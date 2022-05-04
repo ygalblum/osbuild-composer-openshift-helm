@@ -1,0 +1,13 @@
+diff --git a/tools/gen-certs.sh b/tools/gen-certs.sh
+index c6032799..5be5cd87 100755
+--- a/tools/gen-certs.sh
++++ b/tools/gen-certs.sh
+@@ -45,7 +45,7 @@ pushd "$CADIR"
+         -new -nodes \
+         -out /tmp/composer-csr.pem \
+         -subj "/CN=localhost/emailAddress=osbuild@example.com" \
+-        -addext "subjectAltName=DNS:localhost, DNS:composer"
++        -addext "subjectAltName=DNS:localhost, DNS:composer, DNS:image-builder-worker, DNS:image-builder-composer"
+ 
+     openssl ca -batch -config "$OPENSSL_CONFIG" \
+         -extensions osbuild_server_ext \
