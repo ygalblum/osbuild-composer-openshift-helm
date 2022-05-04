@@ -20,7 +20,36 @@ spec:
         app: osbuild-composer
     spec:
       containers:
-      - env:
+      - name: composer
+        image: {{ .Values.deployment.composer.image_name }}:{{ .Values.deployment.composer.image_tag }}
+        command:
+        - "python3"
+        - "/opt/entrypoint.py"
+        - "--remote-worker-api"
+        - "--composer-api"
+        - "--composer-api-port"
+        - {{ .Values.ports.composer_api_internal | quote}}
+        - --composer-api-bind-address
+        - "::1"
+        - "--remote-worker-api-port"
+        - {{ .Values.ports.worker_api_internal | quote}}
+        - --remote-worker-api-bind-address
+        - "::1"
+        volumeMounts:
+        - mountPath: /var/lib/osbuild-composer
+          name: state-directory
+        - mountPath: /var/cache/osbuild-composer
+          name: cache-directory
+        - mountPath: /etc/osbuild-composer
+          name: composer-config
+        ports:
+        - containerPort: {{ .Values.ports.composer_api_internal }}
+          name: composer-api
+          protocol: TCP
+        - containerPort: {{ .Values.ports.worker_api_internal }}
+          name: worker-api
+          protocol: TCP
+        env:
         - name: PGHOST
           valueFrom:
             secretKeyRef:
@@ -50,7 +79,6 @@ spec:
           value: {{ .Values.deployment.composer.pgsslmode }}
         - name: PGMAXCONNS
           value: {{ .Values.deployment.composer.pgmaxconns | quote }}
-        image: {{ .Values.deployment.composer.image_name }}:{{ .Values.deployment.composer.image_tag }}
         livenessProbe:
           exec:
             command:
@@ -60,14 +88,6 @@ spec:
           periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 1
-        name: composer
-        ports:
-        - containerPort: {{ .Values.ports.composer_api_internal }}
-          name: composer-api
-          protocol: TCP
-        - containerPort: {{ .Values.ports.worker_api_internal }}
-          name: worker-api
-          protocol: TCP
         readinessProbe:
           failureThreshold: 3
           tcpSocket:
@@ -82,13 +102,6 @@ spec:
           requests:
             cpu: {{ .Values.deployment.composer.cpu_request }}
             memory: {{ .Values.deployment.composer.memory_request }}
-        volumeMounts:
-        - mountPath: /var/lib/osbuild-composer
-          name: state-directory
-        - mountPath: /var/cache/osbuild-composer
-          name: cache-directory
-        - mountPath: /etc/osbuild-composer
-          name: composer-config
       - image: {{ .Values.deployment.proxy.image_name }}:{{ .Values.deployment.proxy.image_tag }}
         name: proxy
         ports:
