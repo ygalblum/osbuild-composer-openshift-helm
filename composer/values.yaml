@@ -31,6 +31,9 @@ certs:
   ca_certificate_filename: ca-crt.pem
 composer_config_bucket_name: imagebuilder.service.staging
 composer_config_dir: /etc/osbuild-composer
+db:
+  host: postgresql
+  port: "5432"
 
 koji_enable_jwt: "false"
 # liveness_uri: /api/image-builder-composer/v2/openapi
