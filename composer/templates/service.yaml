@@ -13,7 +13,7 @@ spec:
     protocol: TCP
     targetPort: {{ .Values.ports.composer_api_external }}
   selector:
-    app: composer
+    app: osbuild-composer
 ---
 apiVersion: v1
 kind: Service
@@ -30,4 +30,4 @@ spec:
     protocol: TCP
     targetPort: {{ .Values.ports.worker_api_external }}
   selector:
-    app: composer
+    app: osbuild-composer
