@@ -1,0 +1,126 @@
+- name: Generate In-Memory Inventory of Image Builder VM
+  hosts: localhost
+  gather_facts: no
+  tasks:
+  - name: Query VirtualMachineInstances
+    kubernetes.core.k8s_info:
+      api_key: {{ "\"{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}\"" }}
+      api_version: kubevirt.io/v1alpha3
+      ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      host: https://kubernetes.default.svc
+      kind: VirtualMachineInstance
+      namespace: {{ .Release.Namespace }}
+      label_selectors:
+      - app=osbuild-worker
+      validate_certs: yes
+    delay: 10
+    register: vmi_results
+    retries: 60
+    until:
+      - vmi_results.resources | list | length == (image_builder_replicas | int)
+      - >
+        vmi_results.resources |
+          json_query('[*].status.conditions[?type==`Ready`].status') |
+          flatten |
+          select('match', 'True') |
+          list |
+          length == (image_builder_replicas | int)
+
+  - name: Generate In-Memory Inventory of Image Builder VM(s)
+    ansible.builtin.add_host:
+      ansible_ssh_host: {{"'{{ item.status.interfaces[0].ipAddress }}'"}}
+      ansible_ssh_port: "22"
+      ansible_user: "cloud-user"
+      ansible_ssh_private_key_file: /var/secrets/osbuild-worker-ssh-key/ssh-privatekey
+      groups:
+        - workers
+      name: {{"'{{ item.metadata.name }}'"}}
+    loop: {{ "'{{ vmi_results.resources }}'" }}
+
+- name: Configure OSBuild Worker Machine
+  hosts: workers
+  vars:
+    rh_user_file: /var/secrets/redhat-portal-credentials/username
+    rh_password_file: /var/secrets/redhat-portal-credentials/password
+    rpmrepo_distribution: rhel-8-cdn
+    osbuild_composer_tag: v50
+    osbuild_tag: v55
+  gather_facts: yes
+  become: yes
+  tasks:
+  - name: Get RH Credentials
+    no_log: True
+    block:
+    - name: Get RH User
+      slurp:
+        src: {{"'{{ item }}'"}}
+      register: cred_files_content
+      loop:
+      - {{"'{{ rh_user_file }}'"}}
+      - {{"'{{ rh_password_file }}'"}}
+    - set_fact:
+        rh_username: {{"'{{ cred_files_content.results[0].content | b64decode}}'"}}
+        rh_password: {{"'{{ cred_files_content.results[1].content | b64decode}}'"}}
+  - name: Get commit hashes from tags
+    delegate_to: localhost
+    become: no
+    block:
+    - name: Get osbuild-composer releases
+      uri:
+        url: "https://api.github.com/repos/osbuild/osbuild-composer/tags"
+      register: composer_releases
+    - name: Get osbuild releases
+      uri:
+        url: "https://api.github.com/repos/osbuild/osbuild/tags"
+      register: osbuild_releases
+    - set_fact:
+        composer_release: {{"\"{{ composer_releases.json | selectattr('name', '==', osbuild_composer_tag)| first }}\""}}
+        osbuild_release: {{"\"{{ osbuild_releases.json | selectattr('name', '==', osbuild_tag)| first }}\""}}
+  - name: Register the machine with RH
+    community.general.redhat_subscription:
+      state: present
+      username: {{"'{{ rh_username }}'"}}
+      password: {{"'{{ rh_password }}'"}}
+      auto_attach: true
+    retries: 3
+    delay: 5
+  - name: Add osbuild-composer repository
+    tags:
+    - rpmrepo
+    yum_repository:
+      name: "composer"
+      description: {{"'osbuild-composer commit {{ composer_release.commit.sha }}'"}}
+      baseurl: {{"'http://osbuild-composer-repos.s3.amazonaws.com/osbuild-composer/{{ rpmrepo_distribution }}/{{ ansible_architecture }}/{{ composer_release.commit.sha }}'"}}
+      enabled: yes
+      gpgcheck: no
+      priority: "5"
+
+  - name: Add osbuild repository
+    tags:
+    - rpmrepo
+    yum_repository:
+      name: "osbuild"
+      description: {{"'osbuild commit {{ osbuild_release.commit.sha }}'"}}
+      baseurl: {{"'http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/osbuild/{{ rpmrepo_distribution }}/{{ ansible_architecture }}/{{ osbuild_release.commit.sha }}'"}}
+      enabled: yes
+      gpgcheck: no
+      priority: "5"
+
+  - name: Upgrade all packages
+    package:
+      name: "*"
+      state: latest
+    register: result
+    retries: 5
+    until: result is success
+
+  - name: Install worker rpm
+    package:
+      name:
+      - osbuild-composer-worker
+      state: present
+
+  - name: Run the Worker
+    ansible.builtin.systemd:
+      state: started
+      name: osbuild-remote-worker@image-builder-worker:443

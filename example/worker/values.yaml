@@ -1,0 +1,7 @@
+redhat:
+  username: ""
+  password: ""
+  pool_id: ""
+  offline_token: ""
+vm:
+  image_url: 'http://nexus-osbuild:8081/repository/disk-images/rhel-8.5-x86_64-kvm.qcow2'
