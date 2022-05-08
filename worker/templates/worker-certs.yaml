@@ -1,0 +1,16 @@
+{{- $caCert := .Files.Glob (printf "files/certs/%s" .Values.certs.ca_certificate_filename) }}
+{{- $workerCert := .Files.Glob (printf "files/certs/%s" .Values.certs.worker_certificate_filename) }}
+{{- $workerKey := .Files.Glob (printf "files/certs/%s" .Values.certs.worker_key_filename) }}
+{{- if and ($caCert) ($workerCert) ($workerKey) }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-osbuild-worker-certs
+type: Opaque
+data:
+  ca-crt.pem: {{ .Files.Get (printf "files/certs/%s" .Values.certs.ca_certificate_filename) | b64enc | quote }}
+  worker-crt.pem: {{ .Files.Get (printf "files/certs/%s" .Values.certs.worker_certificate_filename) | b64enc | quote }}
+  worker-key.pem: {{ .Files.Get (printf "files/certs/%s" .Values.certs.worker_key_filename) | b64enc | quote }}
+{{- else }}
+{{ fail "Worker Certificates were not provided" }}
+{{- end }}

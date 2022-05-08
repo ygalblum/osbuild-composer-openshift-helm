@@ -1,0 +1,14 @@
+ssh:
+  publickey_filename: osbuild-worker.pub
+  privatekey_filename: osbuild-worker
+
+redhat:
+  username:
+  password:
+  pool_id:
+  offline_token:
+
+certs:
+  worker_certificate_filename: worker-crt.pem
+  worker_key_filename: worker-key.pem
+  ca_certificate_filename: ca-crt.pem

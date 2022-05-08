@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-osbuild-worker-config-job
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - image: image-registry.openshift-image-registry.svc:5000/composer/{{ .Release.Name }}-osbuild-worker-ansible:latest
+          env:
+            - name: ANSIBLE_DIR
+              value: /var/ansible
+            - name: ANSIBLE_CONFIG
+              value: $ANSIBLE_DIR/ansible.cfg
+            - name: IMAGE_BUILDER_REPLICAS
+              value: "1"
+          command:
+            - /bin/bash
+            - -c
+            - |
+              ansible-galaxy collection install -r $ANSIBLE_DIR/requirements.yml
+              ansible-playbook $ANSIBLE_DIR/playbook.yml -e image_builder_replicas=$IMAGE_BUILDER_REPLICAS
+          volumeMounts:
+            - name: ssh-key
+              mountPath: /var/secrets/osbuild-worker-ssh-key
+              readOnly: true
+            - name: ansible
+              mountPath: /var/ansible
+              readOnly: true
+          imagePullPolicy: Always
+          name: ansible-rfe-runner
+      volumes:
+        - name: ssh-key
+          secret:
+            secretName: {{ .Release.Name }}-osbuild-worker-ssh-key
+            defaultMode: 0400
+        - name: ansible
+          configMap:
+            name: {{ .Release.Name }}-osbuild-worker-setup-ansible
+      serviceAccount: {{ .Release.Name }}-osbuild-worker
+      serviceAccountName: {{ .Release.Name }}-osbuild-worker
