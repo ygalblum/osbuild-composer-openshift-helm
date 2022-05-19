@@ -1,0 +1,14 @@
+{{- $authentication := (.Values.config | default dict).authentication | default false }}
+{{- if $authentication }}
+{{- with .Values.config.authentication }}
+{{- if and .oauth_url  .client_id (or .offline_token .client_secret) }}
+[authentication]
+oauth_url = "{{ .oauth_url }}"
+offline_token = "{{ .offline_token }}"
+client_id = "{{ .client_id }}"
+client_secret = "{{ .client_secret }}"
+{{- else }}
+{{ fail "Authentication must include both oauth_url and client_id and either offline_token or client_secret" }}
+{{- end }}
+{{- end }}
+{{- end }}

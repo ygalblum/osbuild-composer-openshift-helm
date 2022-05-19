@@ -1,7 +1,16 @@
 {{- $caCert := .Files.Glob (printf "files/certs/%s" .Values.certs.ca_certificate_filename) }}
+{{- if not ($caCert) }}
+{{ fail "Worker Certificates were not provided" }}
+{{- else }}
 {{- $workerCert := .Files.Glob (printf "files/certs/%s" .Values.certs.worker_certificate_filename) }}
 {{- $workerKey := .Files.Glob (printf "files/certs/%s" .Values.certs.worker_key_filename) }}
-{{- if and ($caCert) ($workerCert) ($workerKey) }}
+{{- $authentication := (.Values.config | default dict).authentication | default false }}
+{{- if and ($workerCert) ($workerKey) ($authentication)  }}
+{{ fail "Either provide worker certificates or authentication information, but not both" }}
+{{- else }}
+{{- if not ( or ( and ($workerCert) ($workerKey) ) ($authentication) ) }}
+{{ fail "Either worker certificates or authentication information must be provided "}}
+{{- else }}
 apiVersion: v1
 kind: Secret
 metadata:
@@ -9,8 +18,10 @@ metadata:
 type: Opaque
 data:
   ca-crt.pem: {{ .Files.Get (printf "files/certs/%s" .Values.certs.ca_certificate_filename) | b64enc | quote }}
+{{ if and ($workerCert) ($workerKey) }}
   worker-crt.pem: {{ .Files.Get (printf "files/certs/%s" .Values.certs.worker_certificate_filename) | b64enc | quote }}
   worker-key.pem: {{ .Files.Get (printf "files/certs/%s" .Values.certs.worker_key_filename) | b64enc | quote }}
-{{- else }}
-{{ fail "Worker Certificates were not provided" }}
+{{- end }}
+{{- end }}
+{{- end }}
 {{- end }}
