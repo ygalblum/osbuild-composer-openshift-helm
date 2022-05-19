@@ -4,9 +4,12 @@
 {{- if and .oauth_url  .client_id (or .offline_token .client_secret) }}
 [authentication]
 oauth_url = "{{ .oauth_url }}"
-offline_token = "{{ .offline_token }}"
 client_id = "{{ .client_id }}"
-client_secret = "{{ .client_secret }}"
+{{ if .offline_token }}
+offline_token =  "/etc/osbuild-composer/offline_token"
+{{ else }}
+client_secret = "/etc/osbuild-composer/client_secret"
+{{- end }}
 {{- else }}
 {{ fail "Authentication must include both oauth_url and client_id and either offline_token or client_secret" }}
 {{- end }}
